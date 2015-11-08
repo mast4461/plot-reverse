@@ -64,7 +64,10 @@ function onload(file) {
             .attr("xlink:href", file.target.result)
         ;
 
-        setScale(div.node().clientWidth/this.width);
+        setScale(Math.min(
+            div.node().clientWidth/this.width,
+            div.node().clientHeight/this.height
+        ));
         resetHandles();
     };
 
