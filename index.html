@@ -329,6 +329,19 @@ function resetHandles() {
 }
 resetHandles();
 
+////////////////////////////////////////////////////////////////////////////
+// Load example image and set reference values for it, used during development
+
+onload({
+    target: {
+        result: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Oldfaithful3.png"
+    }
+});
+inpuxX1.node().value = 1.5;
+inputX2.node().value = 5;
+inputY1.node().value = 50;
+inputY2.node().value = 90;
+
 
 </script>
 </body>
