@@ -1,1 +1,347 @@
-<h1>Hello there</h1>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="d3.v3.min.js"></script>
+<!-- <script src="http://d3js.org/d3.v3.min.js"></script> -->
+<link type="text/css" rel="stylesheet" href="styles.css"/>
+
+<title>plot-reverse</title>
+
+<section>
+    Upload image:<input type='file' onchange="readURL(this);" />
+</section>
+<section>
+    <ul>
+        <li>x1:<input id="x1" type="text"/></li>
+        <li>x2:<input id="x2" type="text"/></li>
+        <li>y1:<input id="y1" type="text"></li>
+        <li>y2:<input id="y2" type="text"/></li>
+    </ul>
+</section>
+<section>
+    <div id="map"></div>
+    <textarea readonly id="output"></textarea>
+</section>
+
+<ol>
+    <li>Upload image.</li>
+    <li>Enter reference values at top.</li>
+    <li>Drag reference handles (x1, x2, y1, y2) in place using mouse.</li>
+    <li>Add points by alt+click.</li>
+</ol>
+<ul>
+    <li>Pan and zoom using mouse.</li>
+    <li>Move points using mouse.</li>
+    <li>Remove points by shift+click.</li>
+</ul>
+
+<script>
+
+////////////////////////////////////////////////////////////////////////////
+// Functions for loading an image
+
+function readURL(input) {
+	// http://jsbin.com/uboqu3/1/edit?html,js,output
+	if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = onload;
+
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+function onload(file) {
+    var image = new Image();
+
+    image.onload = function() {
+        // imageGroup.append("image")
+        imageElement
+            .attr("width",  this.width + "px")
+            .attr("height", this.height + "px")
+            .attr("x", 0 + "px")
+            .attr("y", 0 + "px")
+            .attr("xlink:href", file.target.result)
+        ;
+
+        setScale(div.node().clientWidth/this.width);
+        resetHandles();
+    };
+
+    image.src = file.target.result
+};
+
+////////////////////////////////////////////////////////////////////////////
+// Creating some elements and objects and storing references in variables
+
+var zoomHandler = d3.behavior.zoom()
+    .scaleExtent([0.1, 8])
+    .on("zoom", zoom)
+;
+
+var outputElement = d3.select("textarea#output");
+
+var inpuxX1 = d3.select("input#x1");
+var inputX2 = d3.select("input#x2");
+var inputY1 = d3.select("input#y1");
+var inputY2 = d3.select("input#y2");
+
+// Let the output update when the input changes
+d3.selectAll('input[type=text]').on('input', updateOutput);
+
+var div = d3.select("div#map");
+var svg = div.append('svg');
+var zoomGroup = svg
+    .style("width",  "100%")
+    .style("height", "100%")
+    .call(zoomHandler)
+    .append("g");
+;
+
+var imageGroup = zoomGroup.append('g');
+var imageElement = imageGroup.append('image');
+var overlayGroup = svg.append('g');
+
+
+
+var xScale = d3.scale.linear();
+var yScale = d3.scale.linear();
+
+zoomHandler.x(xScale)
+zoomHandler.y(yScale)
+
+
+
+
+
+function zoom() {
+    // Credit to http://bl.ocks.org/pbogden/7363519
+    zoomHandler.scale(d3.event.scale);
+    zoomHandler.translate(d3.event.translate);
+    scheduleUpdate();
+};
+
+function setScale(scale) {
+    zoomHandler.scale(scale)
+    scheduleUpdate();
+};
+
+function updateZoom() {
+    zoomGroup.attr(
+        'transform',
+        'translate(' + zoomHandler.translate() + ')scale(' + zoomHandler.scale() + ')'
+    );
+};
+
+////////////////////////////////////////////////////////////////////////////
+// Functions for updating the graphics, only on frame draw.
+// This approach is taken to avoid unneccessary computations,
+// the screen only refreshes every so often so we don't need to update
+// the graphics more than once per animation frame.
+
+// Keeping track of the current animation frame id
+var animationFrameId;
+// Update the graphics
+function update() {
+    updateHandles();
+    updatePoints();
+    updateOutput();
+    updateZoom();
+    animationFrameId = undefined;
+};
+
+// Schecule update of the graphics
+function scheduleUpdate() {
+    if (animationFrameId) return;
+    animationFrameId = requestAnimationFrame(update);
+};
+
+////////////////////////////////////////////////////////////////////////////
+// Graphics update functions for separate element categories
+
+// Helper functions
+function xFunc(d) { return xScale(d.x); };
+function yFunc(d) { return yScale(d.y); };
+
+function updateHandles() {
+    handles
+        .attr('x', xFunc)
+        .attr('y', yFunc)
+    ;
+};
+
+function updatePoints() {
+    var pointMarkers = overlayGroup.selectAll('.point').data(points);
+
+    pointMarkers
+        .enter()
+        .append('circle')
+        .classed('point', true)
+        .call(dragPoint)
+    ;
+
+    pointMarkers
+        .attr('cx', xFunc)
+        .attr('cy', yFunc)
+        .attr('r', 5)
+    ;
+
+    pointMarkers.exit().remove();
+};
+
+function updateOutput() {
+    points = points.sort(function(a,b) {
+        return a.x - b.x;
+    });
+
+    var getValue = function(input) {
+        return parseFloat(input.node().value);
+    };
+
+    var xScale = d3.scale.linear()
+        .domain([handlesData[0].x, handlesData[1].x])
+        .range([getValue(inpuxX1), getValue(inputX2)])
+    ;
+
+    var yScale = d3.scale.linear()
+        .domain([handlesData[2].y, handlesData[3].y])
+        .range([getValue(inputY1), getValue(inputY2)])
+    ;
+
+    var rows = points.map(function(point) {
+        return [xScale(point.x), yScale(point.y)].join(', ');
+    });
+    outputElement.node().value = rows.join('\n');
+};
+
+////////////////////////////////////////////////////////////////////////////
+// User interactions
+
+// Adding points
+var points = [];
+svg.call(d3.behavior.drag().on('dragstart', function() {
+    if (d3.event.sourceEvent.altKey) {
+        points.push({
+            x: xScale.invert(d3.event.sourceEvent.offsetX),
+            y: yScale.invert(d3.event.sourceEvent.offsetY)
+        });
+
+        scheduleUpdate();
+    }
+}));
+
+// Removing and dragging points
+var dragPoint = d3.behavior.drag()
+    .on('dragstart', function(d, i) {
+        if (d3.event.sourceEvent.shiftKey) {
+            // Remove point
+            points.splice(i, 1);
+            scheduleUpdate();
+        }
+        d3.event.sourceEvent.stopPropagation();
+    })
+    .on('drag', function(d) {
+        d.x = xScale.invert(d3.event.x);
+        d.y = yScale.invert(d3.event.y);
+        scheduleUpdate();
+    })
+;
+
+// Dragging reference handles
+var dragHandle = d3.behavior.drag()
+    .on('dragstart', function() {
+        d3.event.sourceEvent.stopPropagation();
+
+        // Create ruler lines, visible during dragging
+        this.lineX = svg.append('line')
+            .attr('x1', "0%")
+            .attr('x2', "100%")
+            .classed('ruler-line', true)
+        ;
+        this.lineY = svg.append('line')
+            .attr('y1', "0%")
+            .attr('y2', "100%")
+            .classed('ruler-line', true)
+        ;
+    })
+    .on('drag', function(d) {
+        // Update data for handles and ruler lines
+        d.x = xScale.invert(d3.event.x);
+        d.y = yScale.invert(d3.event.y);
+
+        this.lineX
+            .attr('y1', d3.event.y)
+            .attr('y2', d3.event.y)
+        ;
+        this.lineY
+            .attr('x1', d3.event.x)
+            .attr('x2', d3.event.x)
+        ;
+        scheduleUpdate();
+    })
+    .on('dragend', function() {
+        // Remove ruler lines
+        this.lineX.remove();
+        this.lineY.remove();
+    })
+;
+////////////////////////////////////////////////////////////////////////////
+// Initialization and other things related to reference handles,
+var handlesData = [
+    {x0: '0.20', y0: '0.98', label: "x1"},
+    {x0: '0.98', y0: '0.98', label: "x2"},
+    {x0: '0.10', y0: '0.88', label: "y1"},
+    {x0: '0.10', y0: '0.10', label: "y2"}
+];
+
+var handles = overlayGroup.selectAll('.ref-handle').data(handlesData);
+
+handles
+    .enter()
+    .append('text')
+    .classed('ref-handle', true)
+    .text(function(d) {return d.label;})
+    .call(dragHandle)
+;
+
+function resetHandles() {
+    handles
+        .attr('x', function(d) {
+            // Get the initial value in relative units
+            var x0 = d.x0;
+            // Get the screen position in pixel units
+            var xScreen = x0*svg.node().clientWidth;
+            // Set the position in data units
+            d.x = xScale.invert(xScreen);
+            // Return screen position
+            return xScreen;
+
+        })
+        .attr('y', function(d) {
+            var y0 = d.y0;
+
+            var yScreen = y0*svg.node().clientHeight;
+            d.y = xScale.invert(yScreen);
+
+            return yScreen;
+        })
+    ;
+}
+resetHandles();
+
+////////////////////////////////////////////////////////////////////////////
+// Load example image and set reference values for it, used during development
+
+onload({
+    target: {
+        result: "example-plot.png"
+    }
+});
+inpuxX1.node().value = 10;
+inputX2.node().value = 26;
+inputY1.node().value = 0;
+inputY2.node().value = 700;
+
+
+</script>
+</body>

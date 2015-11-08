@@ -1,0 +1,38 @@
+section {
+	display: flex;
+}
+
+div#map {
+	border: 1px solid black;
+	width: calc(100% - 300px);
+	height: 400px;
+	cursor: crosshair;
+}
+
+textarea#output {
+	width: 300px;
+	padding: 10px;
+}
+
+.ref-handle {
+	font-family: arial;
+	fill: #ddd;
+	stroke: black;
+	stroke-width: 1px;
+	font-size: 40px;
+	font-weigt: bold;
+	text-anchor: end;
+	cursor: move;
+}
+
+.point {
+	fill: #23BAFC;
+	stroke: #1D92FB;
+	stroke-width: 2;
+	cursor: move;
+}
+
+line.ruler-line {
+	stroke: red;
+	stroke-width: 1;
+}
