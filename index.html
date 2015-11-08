@@ -68,6 +68,7 @@ function onload(file) {
         resetHandles();
     };
 
+    console.log(file);
     image.src = file.target.result
 };
 
@@ -334,13 +335,14 @@ resetHandles();
 
 onload({
     target: {
-        result: "example-plot.png"
+        result: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Oldfaithful3.png"
+        // result: "example-plot.png"
     }
 });
-inpuxX1.node().value = 10;
-inputX2.node().value = 26;
-inputY1.node().value = 0;
-inputY2.node().value = 700;
+inpuxX1.node().value = 1.5;
+inputX2.node().value = 5;
+inputY1.node().value = 50;
+inputY2.node().value = 90;
 
 
 </script>
