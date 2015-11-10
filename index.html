@@ -181,6 +181,7 @@ function updatePoints() {
         .append('circle')
         .classed('point', true)
         .call(dragPoint)
+        .on('click', removePoint)
     ;
 
     pointMarkers
@@ -193,9 +194,6 @@ function updatePoints() {
 };
 
 function updateOutput() {
-    points = points.sort(function(a,b) {
-        return a.x - b.x;
-    });
 
     var getValue = function(input) {
         return parseFloat(input.node().value);
@@ -211,7 +209,11 @@ function updateOutput() {
         .range([getValue(inputY1), getValue(inputY2)])
     ;
 
-    var rows = points.map(function(point) {
+    var pointsSorted = points.sort(function(a,b) {
+        return a.x - b.x;
+    });
+
+    var rows = pointsSorted.map(function(point) {
         return [xScale(point.x), yScale(point.y)].join(', ');
     });
     outputElement.node().value = rows.join('\n');
@@ -220,27 +222,31 @@ function updateOutput() {
 ////////////////////////////////////////////////////////////////////////////
 // User interactions
 
-// Adding points
+// Adding and removing points
 var points = [];
-svg.call(d3.behavior.drag().on('dragstart', function() {
-    if (d3.event.sourceEvent.altKey) {
+svg.on('click', function() {
+    console.log(d3.event);
+    if (d3.event.altKey) {
         points.push({
-            x: xScale.invert(d3.event.sourceEvent.offsetX),
-            y: yScale.invert(d3.event.sourceEvent.offsetY)
+            x: xScale.invert(d3.event.offsetX),
+            y: yScale.invert(d3.event.offsetY)
         });
 
         scheduleUpdate();
     }
-}));
+});
+
+function removePoint(d, i) {
+    if (d3.event.shiftKey) {
+        // Remove point
+        points.splice(i, 1);
+        scheduleUpdate();
+    }
+};
 
 // Removing and dragging points
 var dragPoint = d3.behavior.drag()
     .on('dragstart', function(d, i) {
-        if (d3.event.sourceEvent.shiftKey) {
-            // Remove point
-            points.splice(i, 1);
-            scheduleUpdate();
-        }
         d3.event.sourceEvent.stopPropagation();
     })
     .on('drag', function(d) {
