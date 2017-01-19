@@ -1,2 +1,5 @@
 # plot-reverse
-1. Input an image of plot. 2. Do some stuff. 3. Get the data used to create the plot.
+
+A tool for reverse engineering a plot to get the data used to create it.
+
+**Live at <http://mast4461.github.io/plot-reverse/>.**
