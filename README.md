@@ -1,8 +1,7 @@
 # plot-reverse
-1. Input an image of a plot.
-2. Do stuff in the tool.
-3. Get the data used to create the plot.
+A tool for reverse engineering a plot to get the data used to create it.
 
-For when you see a scatterplot or similar which seems to have some nice data behind it but don't have access to the numbers directly. With this tool you can reverse engineer the plot to get the data.
+**Live at <http://mast4461.github.io/plot-reverse/>.** 
+If you see a scatterplot, or similar, which seems to have some nice data behind it but you don't have access to the numbers directly, you can use this tool to reverse engineer the plot and get the data.
 
 The tool can actually be used to do measurements in images with arbitrary content.
