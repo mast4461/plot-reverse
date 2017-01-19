@@ -35,6 +35,15 @@
     <li>Remove points by shift+click.</li>
 </ul>
 
+<br>
+<br>
+
+<p>
+    Created by Martin Stålberg, using mainly <a href="https://d3js.org/">D3.js</a>.
+    <br>
+    Source code available on <a href="https://github.com/mast4461/plot-reverse">GitHub</a>.
+</p>
+
 <script>
 
 ////////////////////////////////////////////////////////////////////////////
@@ -343,13 +352,14 @@ resetHandles();
 
 onload({
     target: {
-        result: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Oldfaithful3.png"
+        result: "/example-plot.svg"
     }
 });
-inpuxX1.node().value = 1.5;
-inputX2.node().value = 5;
-inputY1.node().value = 50;
-inputY2.node().value = 90;
+
+inpuxX1.node().value = 0;
+inputX2.node().value = 10;
+inputY1.node().value = 0;
+inputY2.node().value = 1;
 
 
 </script>
